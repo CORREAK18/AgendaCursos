@@ -1,0 +1,32 @@
+  .reporteventas {
+    background: #a0e1f1;
+    color: rgb(60, 19, 182);
+    padding: 20 px;
+    text-align:center;
+    bottom: 10px;
+    top: 200px;
+    height: 300px;
+    width: 100%;
+    display: block;
+  }
+  .reporte-container {
+  padding: 20px;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.tabla-reporte {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.tabla-reporte th,
+.tabla-reporte td {
+  padding: 10px;
+  border: 1px solid #ccc;
+  text-align: left;
+}
+
+.tabla-reporte thead {
+  background-color: #f4f4f4;
+}

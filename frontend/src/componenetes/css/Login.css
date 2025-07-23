@@ -1,0 +1,278 @@
+/* Reset y configuración general */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    
+}
+
+.login-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    background: rgba(121, 149, 214, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    display: flex;
+    max-width: 1200px;
+    width: 95%;
+    min-height: 600px;
+    overflow: hidden;
+    margin: 200px 200px 200px 200px;
+}
+
+.imagen-login {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    padding: 20px;
+}
+
+.imagen-login img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 15px;
+    transition: transform 0.3s ease;
+}
+
+.imagen-login::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+}
+
+.form-section {
+    flex: 1;
+    padding: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: white;
+    border-radius: 20px;
+    margin: 20px;
+}
+
+.login-title {
+    color: #333;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.login-title::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 3px;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  border-radius: 2px;
+}
+
+.login-form {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* SOLUCION - Grupos custom que sobrescriben Bootstrap */
+.custom-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.custom-form-group:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.custom-form-group:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+/* SOLUCION PRINCIPAL - Labels custom con alta especificidad */
+.custom-label {
+  display: block;
+  color: #555;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+/* Inputs custom que mantienen Bootstrap pero agregan nuestros estilos */
+.custom-input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e1e1e1;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.custom-input.form-control {
+  padding: 18px 24px;
+  border: 2px solid #e1e5e9;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  background: #fafbfc;
+  box-shadow: none;
+}
+
+.custom-input.form-control:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  transform: translateY(-2px);
+}
+
+.custom-input.form-control:hover {
+  border-color: #b8c6db;
+}
+
+.custom-input:focus {
+    outline: none;
+    border-color: #764ba2;
+    box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.1);
+}
+
+/* Botón custom */
+.custom-button {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    margin-top: 1rem;
+}
+
+.custom-button.btn {
+  width: 100%;
+  padding: 18px;
+  background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  animation: fadeInUp 0.6s ease forwards;
+  animation-delay: 0.3s;
+  box-shadow: none;
+}
+
+.custom-button.btn:hover,
+.custom-button.btn:focus,
+.custom-button.btn:active {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+  background: linear-gradient(45deg, #5a6fd8 0%, #6a4190 100%);
+  border: none;
+  color: white;
+}
+
+.custom-button.btn:active {
+  transform: translateY(0);
+}
+
+.custom-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(118, 75, 162, 0.3);
+}
+
+.custom-button:active {
+    transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    min-height: auto;
+  }
+  
+  .imagen-login {
+    max-height: 300px;
+  }
+  
+  .form-section {
+    padding: 30px;
+  }
+  
+  .login-title {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-container {
+    margin: 15px auto;
+  }
+  
+  .form-section {
+    padding: 40px 30px;
+  }
+  
+  .login-title {
+    font-size: 1.8rem;
+  }
+  
+  .custom-input.form-control {
+    padding: 15px 20px;
+    font-size: 1rem;
+  }
+  
+  .custom-button.btn {
+    padding: 15px;
+    font-size: 1rem;
+  }
+  
+  .custom-label {
+    font-size: 1rem;
+    margin-bottom: 20px;
+  }
+  
+  .custom-form-group {
+    margin-bottom: 2rem;
+  }
+}
+
+/* Animaciones */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,0 +1,11 @@
+  .precios {
+    background: #a0e1f1;
+    color: rgb(60, 19, 182);
+    padding: 20 px;
+    text-align:center;
+    bottom: 10px;
+    top: 200px;
+    height: 300px;
+    width: 100%;
+    display: block;
+  }

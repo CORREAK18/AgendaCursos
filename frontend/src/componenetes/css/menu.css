@@ -1,0 +1,9 @@
+  .menu {
+    background:  rgb(110, 227, 239);
+    padding: 20px;
+    height: 50px;
+    display:flex;
+    align-items: center;
+    justify-content: space-between;
+
+  }
