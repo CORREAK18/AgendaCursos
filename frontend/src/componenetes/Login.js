@@ -61,6 +61,11 @@ const Login = () => {
                     <button type="submit" className="custom-button">
                         Iniciar Sesión
                     </button>
+                    <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                        <a href="/registro" className="custom-button" style={{ textDecoration: 'none', display: 'inline-block' }}>
+                            Registrarte
+                        </a>
+                    </div>
                 </Form>
             </div>
         </div>

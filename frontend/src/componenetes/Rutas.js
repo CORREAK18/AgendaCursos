@@ -5,6 +5,7 @@ import Footer from "./Footer";
 import Header from "./Header";
 import Menu from './Menu';
 import Login from './Login';
+import RegistrarUsuario from './RegistrarUsuario';
 import Precios from './Precios';
 import Principal from '../App';
 import ProfesorCursos from './ProfesorCursos';
@@ -35,6 +36,7 @@ function App() {
             <Routes>
                 {/* Rutas públicas */}
                 <Route path="/" element={isAuthenticated ? <Navigate to="/inicio" /> : <Login />} />
+                <Route path="/registro" element={isAuthenticated ? <Navigate to="/inicio" /> : <RegistrarUsuario />} />
                 <Route path="/inicio" element={isAuthenticated ? <Inicio /> : <Navigate to="/" />} />
                 <Route path="/menu" element={isAuthenticated ? <Principal /> : <Navigate to="/" />} />
                 
