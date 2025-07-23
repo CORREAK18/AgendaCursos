@@ -62,7 +62,7 @@ const Login = () => {
                         Iniciar Sesión
                     </button>
                     <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                        <a href="/registro" className="custom-button" style={{ textDecoration: 'none', display: 'inline-block' }}>
+                        <a href="/registro" style={{ textDecoration: 'none', display: 'inline-block' }}>
                             Registrarte
                         </a>
                     </div>
