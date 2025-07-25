@@ -7,6 +7,10 @@ import Login from './Login';
 import RegistrarUsuario from './RegistrarUsuario';
 import Principal from '../App';
 import ProfesorCursos from './ProfesorCursos';
+import CursosDisponibles from './CursosDisponibles';
+import DetalleCurso from './DetalleCurso';
+import SolicitudesAlumnos from './SolicitudesAlumnos';
+import DetalleSolicitud from './DetalleSolicitud';
 import { jwtDecode } from 'jwt-decode';
 
 function App() {
@@ -40,9 +44,12 @@ function App() {
                 
                 {/* Rutas para Profesor */}
                 <Route path="/profesor/cursos" element={isProfesor() ? <ProfesorCursos /> : <Navigate to="/" />} />
+                <Route path="/profesor/solicitudes" element={isProfesor() ? <SolicitudesAlumnos /> : <Navigate to="/" />} />
+                <Route path="/profesor/solicitud/detalle" element={isProfesor() ? <DetalleSolicitud /> : <Navigate to="/" />} />
                 
                 {/* Rutas para Alumno */}
-                <Route path="/alumno/cursos" element={isAlumno() ? <Inicio /> : <Navigate to="/" />} />
+                <Route path="/alumno/cursos" element={isAlumno() ? <CursosDisponibles /> : <Navigate to="/" />} />
+                <Route path="/alumno/curso/detalle" element={isAlumno() ? <DetalleCurso /> : <Navigate to="/" />} />
                 
                 {/* Rutas para Admin */}
                 <Route path="/admin/usuarios" element={isAdmin() ? <Inicio /> : <Navigate to="/" />} />
