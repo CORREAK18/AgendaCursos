@@ -16,6 +16,7 @@ import { jwtDecode } from 'jwt-decode';
 import MisCursosAlumno from './MisCursosAlumno';
 
 
+import SolicitudesProfesores from './SolicitudesProfesores';
 function App() {
     const isAuthenticated = localStorage.getItem('token');
 
@@ -57,6 +58,7 @@ function App() {
                 
                 {/* Rutas para Admin */}
                 <Route path="/admin/usuarios" element={isAdmin() ? <GestionUsuarios /> : <Navigate to="/" />} />
+                <Route path="/solicitudes-profesores" element={isAdmin() ? <SolicitudesProfesores /> : <Navigate to="/" />}/>
             </Routes>
             {isAuthenticated && <Footer />}
         </Router>
@@ -64,5 +66,3 @@ function App() {
 }
 
 export default App;
-
-
