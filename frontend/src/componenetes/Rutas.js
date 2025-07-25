@@ -9,6 +9,8 @@ import Precios from './Precios';
 import Principal from '../App';
 import ProfesorCursos from './ProfesorCursos';
 import { jwtDecode } from 'jwt-decode';
+import MisCursosAlumno from './MisCursosAlumno';
+
 
 function App() {
     const isAuthenticated = localStorage.getItem('token');
@@ -42,7 +44,7 @@ function App() {
                 <Route path="/profesor/cursos" element={isProfesor() ? <ProfesorCursos /> : <Navigate to="/" />} />
                 
                 {/* Rutas para Alumno */}
-                <Route path="/alumno/cursos" element={isAlumno() ? <Precios /> : <Navigate to="/" />} />
+                <Route path="/alumno/cursos" element={isAlumno() ? <MisCursosAlumno /> : <Navigate to="/" />} />
                 
                 {/* Rutas para Admin */}
                 <Route path="/admin/usuarios" element={isAdmin() ? <ReporteVentas /> : <Navigate to="/" />} />
