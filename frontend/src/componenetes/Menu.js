@@ -35,8 +35,7 @@ function Menu() {
                 case 'Administrador':
                     return [
                         ...baseMenu,
-                        { path: "/admin/usuarios", text: "Gestión de Usuarios" },
-                        { path: "/admin/SolcicitudesActivacion", text: "Solcicitudes de Activacion" }
+                        { path: "/admin/usuarios", text: "Gestión de Usuarios" }
                     ];
                 default:
                     return baseMenu;

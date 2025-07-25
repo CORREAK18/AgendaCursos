@@ -264,14 +264,44 @@ Rol.hasMany(Usuario, {
 Curso.belongsTo(Usuario, { as: 'Profesor', foreignKey: 'ProfesorId' });
 Usuario.hasMany(Curso, { as: 'CursosImpartidos', foreignKey: 'ProfesorId' });
 
-SolicitudCurso.belongsTo(Curso, { foreignKey: 'CursoId' });
-Curso.hasMany(SolicitudCurso, { foreignKey: 'CursoId' });
+SolicitudCurso.belongsTo(Curso, { 
+    foreignKey: { 
+        name: 'CursoId',
+        allowNull: false
+    }, 
+    onDelete: 'CASCADE' 
+});
+Curso.hasMany(SolicitudCurso, { 
+    foreignKey: { 
+        name: 'CursoId',
+        allowNull: false
+    }, 
+    onDelete: 'CASCADE' 
+});
 
-SolicitudCurso.belongsTo(Usuario, { as: 'Alumno', foreignKey: 'AlumnoId' });
-Usuario.hasMany(SolicitudCurso, { as: 'SolicitudesCurso', foreignKey: 'AlumnoId' });
+SolicitudCurso.belongsTo(Usuario, { 
+    as: 'Alumno', 
+    foreignKey: 'AlumnoId' 
+});
+Usuario.hasMany(SolicitudCurso, { 
+    as: 'SolicitudesCurso', 
+    foreignKey: 'AlumnoId' 
+});
 
-MaterialCurso.belongsTo(Curso, { foreignKey: 'CursoId' });
-Curso.hasMany(MaterialCurso, { foreignKey: 'CursoId' });
+MaterialCurso.belongsTo(Curso, { 
+    foreignKey: { 
+        name: 'CursoId',
+        allowNull: false
+    }, 
+    onDelete: 'CASCADE' 
+});
+Curso.hasMany(MaterialCurso, { 
+    foreignKey: { 
+        name: 'CursoId',
+        allowNull: false
+    }, 
+    onDelete: 'CASCADE' 
+});
 
 // Exportar los modelos
 module.exports = {

@@ -126,7 +126,7 @@ function ProfesorCursos() {
     };
 
     const handleDelete = async (cursoId) => {
-        if (window.confirm('¿Estás seguro de eliminar este curso?')) {
+        if (window.confirm('¿Estás seguro de eliminar este curso? Esta acción también eliminará todos los materiales y solicitudes asociadas.')) {
             try {
                 const response = await fetch(`http://localhost:5000/api/cursos/${cursoId}`, {
                     method: 'DELETE',
@@ -134,13 +134,15 @@ function ProfesorCursos() {
                 });
 
                 if (response.ok) {
+                    alert('Curso eliminado exitosamente');
                     cargarCursos();
                 } else {
-                    const error = await response.json();
-                    alert(error.mensaje);
+                    const errorData = await response.json();
+                    alert(errorData.mensaje || 'Error al eliminar el curso');
                 }
             } catch (error) {
                 console.error('Error al eliminar curso:', error);
+                alert('Error de conexión al intentar eliminar el curso');
             }
         }
     };

@@ -11,6 +11,7 @@ import CursosDisponibles from './CursosDisponibles';
 import DetalleCurso from './DetalleCurso';
 import SolicitudesAlumnos from './SolicitudesAlumnos';
 import DetalleSolicitud from './DetalleSolicitud';
+import GestionUsuarios from './GestionUsuarios';
 import { jwtDecode } from 'jwt-decode';
 
 function App() {
@@ -52,7 +53,7 @@ function App() {
                 <Route path="/alumno/curso/detalle" element={isAlumno() ? <DetalleCurso /> : <Navigate to="/" />} />
                 
                 {/* Rutas para Admin */}
-                <Route path="/admin/usuarios" element={isAdmin() ? <Inicio /> : <Navigate to="/" />} />
+                <Route path="/admin/usuarios" element={isAdmin() ? <GestionUsuarios /> : <Navigate to="/" />} />
             </Routes>
             {isAuthenticated && <Footer />}
         </Router>

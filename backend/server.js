@@ -193,7 +193,7 @@ const verificarAccesoCurso = async (req, res, next) => {
     }
 };
 // Aprobar/Rechazar cuenta de usuario
-app.put('/usuarios/:usuarioId/estado', verificarToken, verificarRol(['Administrador']), async (req, res) => {
+app.put('/api/usuarios/:usuarioId/estado', verificarToken, verificarRol(['Administrador']), async (req, res) => {
     try {
         const { usuarioId } = req.params;
         const { estado } = req.body;
@@ -204,7 +204,14 @@ app.put('/usuarios/:usuarioId/estado', verificarToken, verificarRol(['Administra
             });
         }
 
-        const usuario = await Usuario.findByPk(usuarioId);
+        const usuario = await Usuario.findOne({
+            where: { IdUsuario: usuarioId },
+            include: [{
+                model: Rol,
+                as: 'Rol',
+                attributes: ['NombreRol']
+            }]
+        });
 
         if (!usuario) {
             return res.status(404).json({
@@ -216,8 +223,18 @@ app.put('/usuarios/:usuarioId/estado', verificarToken, verificarRol(['Administra
         await usuario.save();
 
         res.json({
-            mensaje: 'Estado de cuenta actualizado exitosamente',
-            usuario
+            mensaje: estado === 'activo' 
+                ? 'Usuario activado exitosamente'
+                : 'Usuario suspendido exitosamente',
+            usuario: {
+                IdUsuario: usuario.IdUsuario,
+                NombreCompleto: usuario.NombreCompleto,
+                Correo: usuario.Correo,
+                Telefono: usuario.Telefono,
+                Distrito: usuario.Distrito,
+                EstadoCuenta: usuario.EstadoCuenta,
+                Rol: usuario.Rol
+            }
         });
 
     } catch (error) {
@@ -562,30 +579,52 @@ app.put('/api/cursos/:id', verificarToken, verificarRol(['profesor']), verificar
 });
 
 // Eliminar curso (profesor)
-app.delete('/api/cursos/:id', verificarToken, verificarRol(['profesor']), verificarProfesorActivo, async (req, res) => {
+app.delete('/api/cursos/:id', verificarToken, verificarRol(['Profesor']), verificarProfesorActivo, async (req, res) => {
+    const t = await sequelize.transaction();
+    
     try {
         const { id } = req.params;
+        const profesorId = req.usuario.id;
 
+        // Verificar que el curso existe y pertenece al profesor
         const curso = await Curso.findOne({
             where: {
                 IdCurso: id,
-                ProfesorId: req.usuario.id
-            }
+                ProfesorId: profesorId
+            },
+            transaction: t
         });
 
         if (!curso) {
+            await t.rollback();
             return res.status(404).json({
                 mensaje: 'Curso no encontrado o no tienes permiso para eliminarlo'
             });
         }
 
-        await curso.destroy();
+        // Eliminar primero las solicitudes
+        await SolicitudCurso.destroy({
+            where: { CursoId: id },
+            transaction: t
+        });
+
+        // Eliminar los materiales
+        await MaterialCurso.destroy({
+            where: { CursoId: id },
+            transaction: t
+        });
+
+        // Finalmente eliminar el curso
+        await curso.destroy({ transaction: t });
+
+        await t.commit();
 
         res.json({
             mensaje: 'Curso eliminado exitosamente'
         });
 
     } catch (error) {
+        await t.rollback();
         console.error('Error al eliminar curso:', error);
         res.status(500).json({
             mensaje: 'Error al eliminar el curso',
@@ -593,6 +632,7 @@ app.delete('/api/cursos/:id', verificarToken, verificarRol(['profesor']), verifi
         });
     }
 });
+
 
 // Listar cursos creados por un profesor
 app.get('/api/profesor/:id/cursos', verificarToken, verificarRol(['profesor']), verificarProfesorActivo, async (req, res) => {
@@ -868,8 +908,32 @@ app.put('/api/materiales/:id', verificarToken, verificarRol(['profesor']), verif
 
 // ADMINISTRACIÓN DE USUARIOS (solo admin)
 
+// Obtener todos los usuarios
+app.get('/api/usuarios', verificarToken, verificarRol(['Administrador']), async (req, res) => {
+    try {
+        const usuarios = await Usuario.findAll({
+            attributes: ['IdUsuario', 'NombreCompleto', 'Correo', 'Telefono', 'Distrito', 'FechaRegistro', 'EstadoCuenta'],
+            include: [{
+                model: Rol,
+                as: 'Rol',
+                attributes: ['NombreRol']
+            }],
+            order: [['FechaRegistro', 'DESC']]
+        });
+
+        res.json(usuarios);
+
+    } catch (error) {
+        console.error('Error al obtener usuarios:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener los usuarios',
+            error: error.message
+        });
+    }
+});
+
 // Obtener todos los usuarios pendientes de aprobación
-app.get('/usuarios/pendientes', verificarToken, verificarRol(['admin']), async (req, res) => {
+app.get('/usuarios/pendientes', async (req, res) => {
     try {
         const usuarios = await Usuario.findAll({
             where: { EstadoCuenta: 'pendiente' },
@@ -885,6 +949,36 @@ app.get('/usuarios/pendientes', verificarToken, verificarRol(['admin']), async (
         console.error('Error al obtener usuarios pendientes:', error);
         res.status(500).json({
             mensaje: 'Error al obtener los usuarios',
+            error: error.message
+        });
+    }
+});
+
+// Obtener profesores con cuenta pendiente
+app.get('/profesores/pendientes', async (req, res) => {
+    try {
+        const profesoresPendientes = await Usuario.findAll({
+            where: { 
+                EstadoCuenta: 'pendiente',
+                RolId: 2 // ID del rol profesor
+            },
+            attributes: ['IdUsuario', 'NombreCompleto', 'Correo', 'Telefono', 'Distrito', 'FechaRegistro', 'EstadoCuenta'],
+            include: [{
+                model: Rol,
+                as: 'Rol',
+                attributes: ['NombreRol']
+            }]
+        });
+
+        res.json({
+            cantidad: profesoresPendientes.length,
+            profesores: profesoresPendientes
+        });
+
+    } catch (error) {
+        console.error('Error al obtener profesores pendientes:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener los profesores pendientes',
             error: error.message
         });
     }

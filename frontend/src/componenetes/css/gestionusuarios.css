@@ -1,0 +1,85 @@
+.gestion-usuarios-container {
+    padding: 20px;
+    margin: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.gestion-usuarios-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.gestion-usuarios-title {
+    font-size: 24px;
+    color: #333;
+}
+
+.usuarios-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.usuarios-table th,
+.usuarios-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.usuarios-table th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+}
+
+.usuarios-table tr:hover {
+    background-color: #f9f9f9;
+}
+
+.status-badge {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+.status-activo {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-suspendido {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.status-pendiente {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.action-buttons button {
+    margin: 0 5px;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.activate-btn {
+    background-color: #28a745;
+    color: white;
+}
+
+.suspend-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.action-buttons button:hover {
+    opacity: 0.9;
+}
