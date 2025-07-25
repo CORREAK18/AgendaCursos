@@ -43,7 +43,10 @@ const verificarToken = (req, res, next) => {
 // Middleware para verificar roles
 const verificarRol = (roles) => {
     return (req, res, next) => {
-        if (!roles.includes(req.usuario.rol)) {
+        // Normaliza el rol del usuario y los roles permitidos a minúsculas
+        const usuarioRol = req.usuario.rol.toLowerCase();
+        const rolesPermitidos = roles.map(r => r.toLowerCase());
+        if (!rolesPermitidos.includes(usuarioRol)) {
             return res.status(403).json({ 
                 mensaje: 'No tienes permiso para realizar esta acción' 
             });
@@ -797,8 +800,8 @@ app.post('/api/materiales', verificarToken, verificarRol(['profesor']), verifica
     }
 });
 
-// Ver materiales del curso (alumno aceptado)
-app.get('/api/cursos/:id/materiales', verificarToken, verificarAccesoCurso, async (req, res) => {
+// Ver materiales del curso
+app.get('/api/cursos/:id/materiales', verificarToken, async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -813,6 +816,51 @@ app.get('/api/cursos/:id/materiales', verificarToken, verificarAccesoCurso, asyn
         console.error('Error al obtener materiales:', error);
         res.status(500).json({
             mensaje: 'Error al obtener los materiales',
+            error: error.message
+        });
+    }
+});
+
+// Editar material del curso
+app.put('/api/materiales/:id', verificarToken, verificarRol(['profesor']), verificarProfesorActivo, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { titulo, enlace } = req.body;
+
+        const material = await MaterialCurso.findByPk(id);
+        if (!material) {
+            return res.status(404).json({
+                mensaje: 'Material no encontrado'
+            });
+        }
+
+        // Verificar que el profesor es dueño del curso
+        const curso = await Curso.findOne({
+            where: {
+                IdCurso: material.CursoId,
+                ProfesorId: req.usuario.id
+            }
+        });
+
+        if (!curso) {
+            return res.status(403).json({
+                mensaje: 'No tienes permiso para modificar este material'
+            });
+        }
+
+        await material.update({
+            Titulo: titulo,
+            Enlace: enlace
+        });
+
+        res.json({
+            mensaje: 'Material actualizado exitosamente',
+            material
+        });
+    } catch (error) {
+        console.error('Error al actualizar material:', error);
+        res.status(500).json({
+            mensaje: 'Error al actualizar el material',
             error: error.message
         });
     }
