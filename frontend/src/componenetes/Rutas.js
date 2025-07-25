@@ -13,6 +13,8 @@ import SolicitudesAlumnos from './SolicitudesAlumnos';
 import DetalleSolicitud from './DetalleSolicitud';
 import GestionUsuarios from './GestionUsuarios';
 import { jwtDecode } from 'jwt-decode';
+import MisCursosAlumno from './MisCursosAlumno';
+
 
 function App() {
     const isAuthenticated = localStorage.getItem('token');
@@ -51,6 +53,7 @@ function App() {
                 {/* Rutas para Alumno */}
                 <Route path="/alumno/cursos" element={isAlumno() ? <CursosDisponibles /> : <Navigate to="/" />} />
                 <Route path="/alumno/curso/detalle" element={isAlumno() ? <DetalleCurso /> : <Navigate to="/" />} />
+                <Route path="/alumno/cursos" element={isAlumno() ? <MisCursosAlumno /> : <Navigate to="/" />} />
                 
                 {/* Rutas para Admin */}
                 <Route path="/admin/usuarios" element={isAdmin() ? <GestionUsuarios /> : <Navigate to="/" />} />

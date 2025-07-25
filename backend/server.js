@@ -55,6 +55,50 @@ const verificarRol = (roles) => {
     };
 };
 
+// Endpoint para obtener los cursos del alumno
+app.get('/api/alumno/:id/cursos', verificarToken, verificarRol(['Alumno']), async (req, res) => {
+    try {
+        const cursos = await SolicitudCurso.findAll({
+            where: { 
+                AlumnoId: req.params.id, 
+                EstadoSolicitud: 'aceptado' 
+            },
+            include: [{
+                model: Curso,
+                include: [{
+                    model: Usuario,
+                    as: 'Profesor',
+                    attributes: ['IdUsuario', 'NombreCompleto']
+                }],
+                attributes: ['IdCurso', 'NombreCurso', 'Descripcion', 'FechaInicio', 'FechaFin', 'Horario', 'FechaCreacion']
+            }]
+        });
+        res.json(cursos);
+    } catch (error) {
+        console.error('Error al obtener cursos del alumno:', error);
+        res.status(500).json({ 
+            mensaje: 'Error al obtener los cursos',
+            error: error.message
+        });
+    }
+});
+
+// Endpoint para que un alumno se salga de un curso
+app.delete('/api/alumno/:alumnoId/curso/:cursoId', verificarToken, verificarRol(['Alumno']), async (req, res) => {
+    try {
+        await SolicitudCurso.destroy({
+            where: {
+                AlumnoId: req.params.alumnoId,
+                CursoId: req.params.cursoId,
+                EstadoSolicitud: 'aceptado'
+            }
+        });
+        res.json({ mensaje: 'Salida del curso exitosa' });
+    } catch (error) {
+        res.status(500).json({ mensaje: 'Error al salir del curso' });
+    }
+});
+
 // Middleware para verificar que el profesor esté activo
 const verificarProfesorActivo = async (req, res, next) => {
     try {
@@ -840,8 +884,8 @@ app.post('/api/materiales', verificarToken, verificarRol(['profesor']), verifica
     }
 });
 
-// Ver materiales del curso
-app.get('/api/cursos/:id/materiales', verificarToken, async (req, res) => {
+// Ver materiales del curso (público)
+app.get('/api/cursos/:id/materiales', async (req, res) => {
     try {
         const { id } = req.params;
 
