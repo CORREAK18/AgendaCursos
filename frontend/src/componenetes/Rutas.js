@@ -9,7 +9,7 @@ import Precios from './Precios';
 import Principal from '../App';
 import ProfesorCursos from './ProfesorCursos';
 import { jwtDecode } from 'jwt-decode';
-
+import SolicitudesProfesores from './SolicitudesProfesores';
 function App() {
     const isAuthenticated = localStorage.getItem('token');
 
@@ -50,6 +50,11 @@ function App() {
                 {/* Rutas heredadas del sistema anterior */}
                 <Route path="/Precios" element={isAuthenticated ? <Precios /> : <Navigate to="/" />} />
                 <Route path="/ReporteVentas" element={isAuthenticated ? <ReporteVentas /> : <Navigate to="/" />} />
+               {/* Ruta para solicitudes de profesores, solo para admin */}
+                <Route
+                    path="/solicitudes-profesores"
+                    element={isAdmin() ? <SolicitudesProfesores /> : <Navigate to="/" />}
+                />
             </Routes>
             {isAuthenticated && <Footer />}
         </Router>
@@ -57,5 +62,3 @@ function App() {
 }
 
 export default App;
-
-

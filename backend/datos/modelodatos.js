@@ -33,12 +33,14 @@ console.log('Intentando conectar a la base de datos con la siguiente configuraci
     port: config.dialectOptions.options.port
 });
 
-const sequelize = new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASSWORD,
-    config
-);
+const sequelize = new Sequelize({
+  host: 'SQL1004.site4now.net',
+  database: 'db_abc123_agendacursos2025',
+  username: 'db_abc123_agendacursos2025_admin',
+  password: 'AgendaCursos18',
+  dialect: 'mssql',
+  port: 1433
+});
 
 // Prueba de conexión inicial
 sequelize.authenticate()
@@ -75,7 +77,7 @@ const Rol = sequelize.define('Roles', {
     timestamps: false
 });
 
-// Tabla: Usuarios
+// ✅ TABLA USUARIOS CORREGIDA - Con todos los campos necesarios
 const Usuario = sequelize.define('Usuarios', {
     IdUsuario: { 
         type: DataTypes.INTEGER, 
@@ -89,7 +91,7 @@ const Usuario = sequelize.define('Usuarios', {
     Correo: { 
         type: DataTypes.STRING(100), 
         allowNull: false,
-        unique: true
+        unique: true 
     },
     Contrasena: { 
         type: DataTypes.STRING(255), 
@@ -100,21 +102,8 @@ const Usuario = sequelize.define('Usuarios', {
         allowNull: true 
     },
     Distrito: { 
-        type: DataTypes.STRING(100), 
+        type: DataTypes.STRING(50), 
         allowNull: true 
-    },
-    FechaRegistro: { 
-        type: DataTypes.DATE, 
-        allowNull: false,
-        defaultValue: Sequelize.literal('GETDATE()')
-    },
-    EstadoCuenta: { 
-        type: DataTypes.STRING(20), 
-        allowNull: false,
-        defaultValue: 'pendiente',
-        validate: {
-            isIn: [['pendiente', 'activo', 'rechazado']]
-        }
     },
     RolId: { 
         type: DataTypes.INTEGER, 
@@ -123,6 +112,19 @@ const Usuario = sequelize.define('Usuarios', {
             model: 'Roles',
             key: 'IdRol'
         }
+    },
+    EstadoCuenta: { 
+        type: DataTypes.STRING(20), 
+        allowNull: false,
+        defaultValue: 'pendiente',
+        validate: {
+            isIn: [['pendiente', 'activo', 'rechazado', 'inactivo']]
+        }
+    },
+    FechaRegistro: { 
+        type: DataTypes.DATE, 
+        allowNull: false,
+        defaultValue: Sequelize.literal('GETDATE()')
     }
 }, {
     tableName: 'Usuarios',
