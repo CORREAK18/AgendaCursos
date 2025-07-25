@@ -78,6 +78,89 @@ const verificarProfesorActivo = async (req, res, next) => {
     }
 };
 
+// Endpoint para obtener cursos disponibles
+app.get('/api/cursos/disponibles', async (req, res) => {
+    try {
+        console.log('Buscando cursos disponibles...');
+        console.log('Usuario autenticado:', req.usuario);
+
+        const cursosDisponibles = await Curso.findAll({
+            include: [{
+                model: Usuario,
+                as: 'Profesor',
+                where: {
+                    EstadoCuenta: 'activo',
+                    RolId: 2 // ID del rol profesor
+                },
+                attributes: ['IdUsuario', 'NombreCompleto']
+            }],
+            where: {
+                FechaFin: {
+                    [Op.gte]: new Date()
+                }
+            },
+            attributes: ['IdCurso', 'NombreCurso', 'Descripcion', 'FechaInicio', 'FechaFin', 'Horario']
+        });
+
+        console.log('Cursos encontrados:', cursosDisponibles.length);
+
+        res.json(cursosDisponibles);
+    } catch (error) {
+        console.error('Error al obtener cursos disponibles:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener los cursos disponibles',
+            error: error.message
+        });
+    }
+});
+
+// Endpoint para enviar solicitud de inscripción
+app.post('/api/cursos/:cursoId/solicitud', async (req, res) => {
+    try {
+        const cursoId = req.params.cursoId;
+        const { alumnoId } = req.body; // Ahora obtenemos el alumnoId del cuerpo de la petición
+
+        if (!alumnoId) {
+            return res.status(400).json({
+                mensaje: 'Es necesario proporcionar el ID del alumno'
+            });
+        }
+
+        // Verificar si ya existe una solicitud pendiente
+        const solicitudExistente = await SolicitudCurso.findOne({
+            where: {
+                CursoId: cursoId,
+                AlumnoId: alumnoId,
+                EstadoSolicitud: 'pendiente'
+            }
+        });
+
+        if (solicitudExistente) {
+            return res.status(400).json({
+                mensaje: 'Ya tienes una solicitud pendiente para este curso'
+            });
+        }
+
+        // Crear nueva solicitud
+        const nuevaSolicitud = await SolicitudCurso.create({
+            CursoId: cursoId,
+            AlumnoId: alumnoId,
+            EstadoSolicitud: 'pendiente'
+        });
+
+        res.status(201).json({
+            mensaje: 'Solicitud enviada correctamente',
+            solicitud: nuevaSolicitud
+        });
+    } catch (error) {
+        console.error('Error al enviar solicitud:', error);
+        res.status(500).json({
+            mensaje: 'Error al enviar la solicitud',
+            error: error.message
+        });
+    }
+});
+
 // Middleware para verificar acceso al curso
 const verificarAccesoCurso = async (req, res, next) => {
     try {
@@ -575,12 +658,13 @@ app.post('/api/solicitudes', verificarToken, verificarRol(['alumno']), async (re
 });
 
 // Ver solicitudes de cursos recibidas (profesor)
-app.get('/api/profesor/:id/solicitudes', verificarToken, verificarRol(['profesor']), verificarProfesorActivo, async (req, res) => {
+app.get('/api/profesor/:id/solicitudes', async (req, res) => {
     try {
+        const { id } = req.params;
         const solicitudes = await SolicitudCurso.findAll({
             include: [{
                 model: Curso,
-                where: { ProfesorId: req.usuario.id },
+                where: { ProfesorId: id },
                 attributes: ['NombreCurso']
             }, {
                 model: Usuario,
@@ -603,7 +687,7 @@ app.get('/api/profesor/:id/solicitudes', verificarToken, verificarRol(['profesor
 });
 
 // Aceptar/Rechazar solicitud (profesor)
-app.put('/api/solicitudes/:id', verificarToken, verificarRol(['profesor']), verificarProfesorActivo, async (req, res) => {
+app.put('/api/solicitudes/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const { estado } = req.body;
@@ -616,8 +700,7 @@ app.put('/api/solicitudes/:id', verificarToken, verificarRol(['profesor']), veri
 
         const solicitud = await SolicitudCurso.findOne({
             include: [{
-                model: Curso,
-                where: { ProfesorId: req.usuario.id }
+                model: Curso
             }],
             where: { IdSolicitud: id }
         });
