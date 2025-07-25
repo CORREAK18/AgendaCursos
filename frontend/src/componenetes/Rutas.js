@@ -1,12 +1,10 @@
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import ReporteVentas from './ReporteVentas'
 import Inicio from "./Inicio";
 import Footer from "./Footer";
 import Header from "./Header";
 import Menu from './Menu';
 import Login from './Login';
 import RegistrarUsuario from './RegistrarUsuario';
-import Precios from './Precios';
 import Principal from '../App';
 import ProfesorCursos from './ProfesorCursos';
 import { jwtDecode } from 'jwt-decode';
@@ -44,14 +42,10 @@ function App() {
                 <Route path="/profesor/cursos" element={isProfesor() ? <ProfesorCursos /> : <Navigate to="/" />} />
                 
                 {/* Rutas para Alumno */}
-                <Route path="/alumno/cursos" element={isAlumno() ? <Precios /> : <Navigate to="/" />} />
+                <Route path="/alumno/cursos" element={isAlumno() ? <Inicio /> : <Navigate to="/" />} />
                 
                 {/* Rutas para Admin */}
-                <Route path="/admin/usuarios" element={isAdmin() ? <ReporteVentas /> : <Navigate to="/" />} />
-
-                {/* Rutas heredadas del sistema anterior */}
-                <Route path="/Precios" element={isAuthenticated ? <Precios /> : <Navigate to="/" />} />
-                <Route path="/ReporteVentas" element={isAuthenticated ? <ReporteVentas /> : <Navigate to="/" />} />
+                <Route path="/admin/usuarios" element={isAdmin() ? <Inicio /> : <Navigate to="/" />} />
             </Routes>
             {isAuthenticated && <Footer />}
         </Router>
