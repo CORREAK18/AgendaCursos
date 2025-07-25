@@ -51,9 +51,9 @@ function App() {
                 <Route path="/profesor/solicitud/detalle" element={isProfesor() ? <DetalleSolicitud /> : <Navigate to="/" />} />
                 
                 {/* Rutas para Alumno */}
-                <Route path="/alumno/cursos" element={isAlumno() ? <CursosDisponibles /> : <Navigate to="/" />} />
+                <Route path="/cursos/disponibles" element={isAlumno() ? <CursosDisponibles /> : <Navigate to="/" />} />
                 <Route path="/alumno/curso/detalle" element={isAlumno() ? <DetalleCurso /> : <Navigate to="/" />} />
-                <Route path="/alumno/cursos" element={isAlumno() ? <MisCursosAlumno /> : <Navigate to="/" />} />
+                <Route path="/alumno/cursosM" element={isAlumno() ? <MisCursosAlumno /> : <Navigate to="/" />} />
                 
                 {/* Rutas para Admin */}
                 <Route path="/admin/usuarios" element={isAdmin() ? <GestionUsuarios /> : <Navigate to="/" />} />

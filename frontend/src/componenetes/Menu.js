@@ -30,7 +30,8 @@ function Menu() {
                     return [
                         ...baseMenu,
                         { path: "/alumno/cursos", text: "Mis Cursos" },
-                        { path: "/cursos/disponibles", text: "Cursos Disponibles" }
+                        { path: "/cursos/disponibles", text: "Cursos Disponibles" },
+                        { path: "/alumno/cursosM", text: "Mis Cursos" }
                     ];
                 case 'Administrador':
                     return [

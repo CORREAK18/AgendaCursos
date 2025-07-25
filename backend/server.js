@@ -165,7 +165,7 @@ app.get('/api/cursos/disponibles', async (req, res) => {
 app.post('/api/cursos/:cursoId/solicitud', async (req, res) => {
     try {
         const cursoId = req.params.cursoId;
-        const { alumnoId } = req.body; // Ahora obtenemos el alumnoId del cuerpo de la petición
+        const { alumnoId } = req.body;
 
         if (!alumnoId) {
             return res.status(400).json({
@@ -173,12 +173,11 @@ app.post('/api/cursos/:cursoId/solicitud', async (req, res) => {
             });
         }
 
-        // Verificar si ya existe una solicitud pendiente
+        // Verificar si existe alguna solicitud previa para este curso (en cualquier estado)
         const solicitudExistente = await SolicitudCurso.findOne({
             where: {
                 CursoId: cursoId,
-                AlumnoId: alumnoId,
-                EstadoSolicitud: 'pendiente'
+                AlumnoId: alumnoId
             }
         });
 
@@ -720,9 +719,21 @@ app.post('/api/solicitudes', verificarToken, verificarRol(['alumno']), async (re
         });
 
         if (solicitudExistente) {
-            return res.status(400).json({
-                mensaje: 'Ya has enviado una solicitud para este curso'
-            });
+            let mensaje = 'Ya no puedes enviar una solicitud para este curso. ';
+            
+            switch(solicitudExistente.EstadoSolicitud) {
+                case 'pendiente':
+                    mensaje += 'Tienes una solicitud pendiente de aprobación.';
+                    break;
+                case 'aceptado':
+                    mensaje += 'Ya estás inscrito en este curso.';
+                    break;
+                case 'rechazado':
+                    mensaje += 'Tu solicitud anterior fue rechazada.';
+                    break;
+            }
+
+            return res.status(400).json({ mensaje });
         }
 
         const nuevaSolicitud = await SolicitudCurso.create({
