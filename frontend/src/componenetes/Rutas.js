@@ -5,7 +5,7 @@ import Header from "./Header";
 import Menu from './Menu';
 import Login from './Login';
 import RegistrarUsuario from './RegistrarUsuario';
-import Principal from '../App';
+
 import ProfesorCursos from './ProfesorCursos';
 import CursosDisponibles from './CursosDisponibles';
 import DetalleCurso from './DetalleCurso';
@@ -43,7 +43,7 @@ function App() {
                 <Route path="/" element={isAuthenticated ? <Navigate to="/inicio" /> : <Login />} />
                 <Route path="/registro" element={isAuthenticated ? <Navigate to="/inicio" /> : <RegistrarUsuario />} />
                 <Route path="/inicio" element={isAuthenticated ? <Inicio /> : <Navigate to="/" />} />
-                <Route path="/menu" element={isAuthenticated ? <Principal /> : <Navigate to="/" />} />
+         
                 
                 {/* Rutas para Profesor */}
                 <Route path="/profesor/cursos" element={isProfesor() ? <ProfesorCursos /> : <Navigate to="/" />} />

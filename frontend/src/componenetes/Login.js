@@ -16,7 +16,7 @@ const Login = () => {
             });
             
             localStorage.setItem('token', response.data.token);
-            window.location.href = "/menu";
+            window.location.href = "/inicio";
         } catch (error) {
             alert(error.response?.data?.mensaje || 'Error al iniciar sesión');
         }
