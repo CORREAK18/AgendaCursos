@@ -2,20 +2,15 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const { getPendingProfessors, acceptProfessor, rejectProfessor } = require('./datos/modelodatos');
 const jwt = require('jsonwebtoken');
-const profesoresRouter = require('./routes/profesores');
 const app = express();
 const PORT = 5000;
-
-//const { Usuario } = require('./datos/modelodatos');
 
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
 app.use(cors());
 app.use(express.json());
-app.use('/profesores', profesoresRouter);
 
 app.get('/profesores/pendientes', async (req, res) => {
     try {
@@ -46,20 +41,7 @@ app.get('/profesores/pendientes', async (req, res) => {
     }
 });
 
-// Endpoint to reject a professor's request
-app.post('/api/profesores/rechazar/:id', async (req, res) => {
-    const { id } = req.params;
-    try {
-        await rejectProfessor(id);
-        res.status(200).json({ message: 'Professor account denied' });
-    } catch (error) {
-        res.status(500).json({ message: 'Error rejecting professor request' });
-    }
-});
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
 
 // Importar modelos desde modelodatos.js
 const { sequelize, Rol, Usuario, Curso, SolicitudCurso, MaterialCurso } = require('./datos/modelodatos');

@@ -25,7 +25,7 @@ const Login = () => {
     return (
         <div className="container">
             <div className="imagen-login">
-                <img src='./imagenes/escuelaii.jpg' alt='Imagen en login' />
+                <img src='./imagenes/imgLogin.jpeg' alt='Imagen en login' />
             </div>
             <div className="form-section">
                 <h3 className="login-title">Iniciar Sesión</h3>

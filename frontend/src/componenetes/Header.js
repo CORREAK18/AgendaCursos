@@ -15,8 +15,8 @@ const Header = () => {
 
   return (
     <header className="header" >
-      <img className="logo" src="./imagenes/logo_informatica.png" alt="Logo"/>
-      <h1>COSMO CINE</h1>
+      <img className="logo"  alt="."/>
+      <h1>EDUCA PRO</h1>
       <div className="clock" >{time.toLocaleTimeString()}</div>
     </header>
   );

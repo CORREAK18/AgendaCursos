@@ -1,12 +1,124 @@
-.history {
-  text-align: center;
-  padding: 40px;
-  background-color: #f4f4f4;
+:root {
+  --main-bg: #f7fafc;
+  --main-color: #22223b;
+  --brand-color: #2979ff;
+  --accent: #ffd166;
+  --box-bg: #fff;
+  --shadow: 0 6px 24px rgba(44, 62, 80, 0.10);
 }
 
+body {
+  background: var(--main-bg);
+}
+
+.history {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 85vh;
+  background: var(--main-bg);
+  padding: 40px 16px;
+}
+
+.history-content {
+  background: var(--box-bg);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  max-width: 540px;
+  width: 100%;
+  padding: 38px 32px 36px 32px;
+  text-align: center;
+  animation: fadeIn 1s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(30px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+
+
 .history-image {
-  width: 80%;
-  max-width: 600px;
-  margin-top: 20px;
+  width: 210px;         /* Imagen más grande */
+  height: 210px;
+  border-radius: 20px;
+  object-fit: cover;
+  margin: 20px auto 28px auto;
+  box-shadow: 0 4px 16px rgba(41,121,255,0.10);
+  background: #eaf3ff;
+  display: block;
+}
+
+.history h1 {
+  font-size: 2.2rem;
+  color: var(--main-color);
+  font-weight: 800;
+  margin-bottom: 6px;
+  letter-spacing: -1.5px;
+}
+
+.brand-name {
+  color: var(--brand-color);
+  font-weight: 900;
+  font-size: 2.3rem;
+  letter-spacing: -1px;
+}
+
+.slogan {
+  color: #63687d;
+  font-size: 1.13rem;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.history-text p {
+  color: #44475a;
+  font-size: 1.07rem;
+  margin: 0 0 16px 0;
+  text-align: left;
+  line-height: 1.6;
+}
+
+.history-text .vision {
+  color: var(--brand-color);
+  font-weight: 600;
+}
+
+.btn-primary {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 14px 34px;
+  background: linear-gradient(90deg, #2979ff 70%, #00c6fb 100%);
+  color: #fff;
+  font-weight: 700;
   border-radius: 10px;
+  font-size: 1.09rem;
+  text-decoration: none;
+  box-shadow: 0 2px 14px rgba(41,121,255,0.10);
+  letter-spacing: 0.5px;
+  transition: background 0.3s, box-shadow 0.2s, transform 0.2s;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(90deg, #2557c6 70%, #039be5 100%);
+  box-shadow: 0 4px 24px rgba(41,121,255,0.18);
+  transform: translateY(-2px) scale(1.03);
+}
+
+@media (max-width: 650px) {
+  .history-content {
+    padding: 24px 10px 24px 10px;
+    border-radius: 12px;
+  }
+  .history-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 10px;
+  }
+  .history h1, .brand-name {
+    font-size: 1.5rem;
+  }
+  .btn-primary {
+    font-size: 1rem;
+    padding: 11px 20px;
+  }
 }

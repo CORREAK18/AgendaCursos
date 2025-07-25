@@ -1,3 +1,39 @@
+/* MODAL Y BACKDROP CORRECTOS */
+
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.3);
+    z-index: 1040;
+}
+
+.custom-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1050;
+    width: 100%;
+    max-width: 500px;
+    margin: 0;
+}
+
+.modal-dialog {
+    margin: 0;
+}
+
+/* Opcional para que no salga scroll horizontal en pantallas chicas */
+@media (max-width: 520px) {
+    .custom-modal {
+        max-width: 96vw;
+    }
+}
+
+/* El resto de tu CSS queda igual */
+
 .solicitudes-container {
     padding: 2rem;
 }
@@ -47,3 +83,15 @@
     font-size: 24px;
 }
 
+/* Centrado absoluto de la modal personalizada */
+.custom-modal {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+ 
+    width: 100%;
+    max-width: 500px;
+    margin: 0;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.16);
+}

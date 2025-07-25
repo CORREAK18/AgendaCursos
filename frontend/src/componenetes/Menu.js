@@ -29,7 +29,7 @@ function Menu() {
                 case 'Alumno':
                     return [
                         ...baseMenu,
-                        { path: "/alumno/cursos", text: "Mis Cursos" },
+                       
                         { path: "/cursos/disponibles", text: "Cursos Disponibles" },
                         { path: "/alumno/cursosM", text: "Mis Cursos" }
                     ];
