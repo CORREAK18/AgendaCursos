@@ -3,8 +3,18 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
 const app = express();
 const PORT = 5000;
+
+// Configuración de nodemailer
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'educaprocorporation8@gmail.com', // Tu email de Gmail
+        pass: 'syul lojp pjjn ntlh' // Tu App Password de Gmail
+    }
+});
 
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en el puerto ${PORT}`);
@@ -834,9 +844,21 @@ app.put('/api/solicitudes/:id', async (req, res) => {
         }
 
         const solicitud = await SolicitudCurso.findOne({
-            include: [{
-                model: Curso
-            }],
+            include: [
+                {
+                    model: Curso,
+                    include: [{
+                        model: Usuario,
+                        as: 'Profesor',
+                        attributes: ['NombreCompleto']
+                    }]
+                },
+                {
+                    model: Usuario,
+                    as: 'Alumno',
+                    attributes: ['NombreCompleto', 'Correo']
+                }
+            ],
             where: { IdSolicitud: id }
         });
 
@@ -848,6 +870,173 @@ app.put('/api/solicitudes/:id', async (req, res) => {
 
         solicitud.EstadoSolicitud = estado;
         await solicitud.save();
+
+        // Enviar correo al alumno
+        try {
+            const esAceptado = estado === 'aceptado';
+            const asunto = esAceptado 
+                ? `¡Felicidades! Tu solicitud ha sido aceptada` 
+                : `Información sobre tu solicitud de curso`;
+
+            const htmlContent = `
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>${asunto}</title>
+                    <style>
+                        body {
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                            line-height: 1.6;
+                            color: #333;
+                            background-color: #f4f4f4;
+                            margin: 0;
+                            padding: 0;
+                        }
+                        .container {
+                            max-width: 600px;
+                            margin: 0 auto;
+                            background-color: #ffffff;
+                            border-radius: 10px;
+                            overflow: hidden;
+                            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+                        }
+                        .header {
+                            background: ${esAceptado ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'};
+                            color: white;
+                            padding: 30px;
+                            text-align: center;
+                        }
+                        .header h1 {
+                            margin: 0;
+                            font-size: 28px;
+                            font-weight: 300;
+                        }
+                        .content {
+                            padding: 40px 30px;
+                        }
+                        .greeting {
+                            font-size: 18px;
+                            margin-bottom: 20px;
+                            color: #2c3e50;
+                        }
+                        .message {
+                            background-color: ${esAceptado ? '#d4edda' : '#f8d7da'};
+                            border-left: 4px solid ${esAceptado ? '#28a745' : '#dc3545'};
+                            padding: 20px;
+                            margin: 20px 0;
+                            border-radius: 5px;
+                        }
+                        .course-details {
+                            background-color: #f8f9fa;
+                            padding: 20px;
+                            border-radius: 8px;
+                            margin: 20px 0;
+                        }
+                        .course-details h3 {
+                            margin-top: 0;
+                            color: #495057;
+                        }
+                        .detail-item {
+                            margin: 10px 0;
+                            padding: 5px 0;
+                            border-bottom: 1px solid #dee2e6;
+                        }
+                        .detail-label {
+                            font-weight: bold;
+                            color: #6c757d;
+                        }
+                        .footer {
+                            background-color: #2c3e50;
+                            color: white;
+                            padding: 20px;
+                            text-align: center;
+                            font-size: 14px;
+                        }
+                        .btn {
+                            display: inline-block;
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            color: white;
+                            padding: 12px 25px;
+                            text-decoration: none;
+                            border-radius: 25px;
+                            margin: 20px 0;
+                            font-weight: bold;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>${esAceptado ? '🎉 ¡Solicitud Aceptada!' : '📧 Actualización de Solicitud'}</h1>
+                        </div>
+                        <div class="content">
+                            <div class="greeting">
+                                Hola ${solicitud.Alumno.NombreCompleto},
+                            </div>
+                            
+                            <div class="message">
+                                ${esAceptado 
+                                    ? `<strong>¡Excelentes noticias!</strong> Tu solicitud para el curso <strong>"${solicitud.Curso.NombreCurso}"</strong> ha sido <strong style="color: #28a745;">ACEPTADA</strong> por el profesor ${solicitud.Curso.Profesor.NombreCompleto}.`
+                                    : `Te informamos que tu solicitud para el curso <strong>"${solicitud.Curso.NombreCurso}"</strong> ha sido <strong style="color: #dc3545;">RECHAZADA</strong> por el profesor ${solicitud.Curso.Profesor.NombreCompleto}.`
+                                }
+                            </div>
+
+                            <div class="course-details">
+                                <h3>📚 Detalles del Curso</h3>
+                                <div class="detail-item">
+                                    <span class="detail-label">Nombre del curso:</span> ${solicitud.Curso.NombreCurso}
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Profesor:</span> ${solicitud.Curso.Profesor.NombreCompleto}
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Estado de la solicitud:</span> 
+                                    <span style="color: ${esAceptado ? '#28a745' : '#dc3545'}; font-weight: bold;">
+                                        ${estado.toUpperCase()}
+                                    </span>
+                                </div>
+                            </div>
+
+                            ${esAceptado 
+                                ? `<p>Ya puedes acceder a tu curso desde la plataforma. ¡Te deseamos mucho éxito en tu aprendizaje!</p>
+                                   <div style="text-align: center;">
+                                       
+                                   </div>`
+                                : `<p>Lamentamos que no hayas sido seleccionado para este curso en particular. Te animamos a seguir explorando otros cursos disponibles en nuestra plataforma.</p>
+                                   <div style="text-align: center;">
+                                       
+                                   </div>`
+                            }
+
+                            <p style="margin-top: 30px; color: #6c757d;">
+                                Si tienes alguna pregunta, no dudes en contactarnos.
+                            </p>
+                        </div>
+                        <div class="footer">
+                            <p>© 2025 AgendaCursos - Plataforma de Gestión de Cursos</p>
+                            <p>Este es un correo automático, por favor no responder.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            const mailOptions = {
+                from: 'jeckserasbell.05@gmail.com',
+                to: solicitud.Alumno.Correo,
+                subject: asunto,
+                html: htmlContent
+            };
+
+            await transporter.sendMail(mailOptions);
+            console.log(`Correo enviado exitosamente a: ${solicitud.Alumno.Correo}`);
+
+        } catch (emailError) {
+            console.error('Error al enviar correo:', emailError);
+            // No fallar la respuesta si el correo falla, solo loggear el error
+        }
 
         res.json({
             mensaje: 'Solicitud actualizada exitosamente',
