@@ -1,15 +1,22 @@
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import ReporteVentas from './ReporteVentas'
 import Inicio from "./Inicio";
 import Footer from "./Footer";
 import Header from "./Header";
 import Menu from './Menu';
 import Login from './Login';
-import Precios from './Precios';
-import Principal from '../App';
-import ProfesorCursos from './ProfesorCursos';
-import { jwtDecode } from 'jwt-decode';
+import RegistrarUsuario from './RegistrarUsuario';
 
+import ProfesorCursos from './ProfesorCursos';
+import CursosDisponibles from './CursosDisponibles';
+import DetalleCurso from './DetalleCurso';
+import SolicitudesAlumnos from './SolicitudesAlumnos';
+import DetalleSolicitud from './DetalleSolicitud';
+import GestionUsuarios from './GestionUsuarios';
+import { jwtDecode } from 'jwt-decode';
+import MisCursosAlumno from './MisCursosAlumno';
+
+
+import SolicitudesProfesores from './SolicitudesProfesores';
 function App() {
     const isAuthenticated = localStorage.getItem('token');
 
@@ -35,21 +42,23 @@ function App() {
             <Routes>
                 {/* Rutas públicas */}
                 <Route path="/" element={isAuthenticated ? <Navigate to="/inicio" /> : <Login />} />
+                <Route path="/registro" element={isAuthenticated ? <Navigate to="/inicio" /> : <RegistrarUsuario />} />
                 <Route path="/inicio" element={isAuthenticated ? <Inicio /> : <Navigate to="/" />} />
-                <Route path="/menu" element={isAuthenticated ? <Principal /> : <Navigate to="/" />} />
+         
                 
                 {/* Rutas para Profesor */}
                 <Route path="/profesor/cursos" element={isProfesor() ? <ProfesorCursos /> : <Navigate to="/" />} />
+                <Route path="/profesor/solicitudes" element={isProfesor() ? <SolicitudesAlumnos /> : <Navigate to="/" />} />
+                <Route path="/profesor/solicitud/detalle" element={isProfesor() ? <DetalleSolicitud /> : <Navigate to="/" />} />
                 
                 {/* Rutas para Alumno */}
-                <Route path="/alumno/cursos" element={isAlumno() ? <Precios /> : <Navigate to="/" />} />
+                <Route path="/cursos/disponibles" element={isAlumno() ? <CursosDisponibles /> : <Navigate to="/" />} />
+                <Route path="/alumno/curso/detalle" element={isAlumno() ? <DetalleCurso /> : <Navigate to="/" />} />
+                <Route path="/alumno/cursosM" element={isAlumno() ? <MisCursosAlumno /> : <Navigate to="/" />} />
                 
                 {/* Rutas para Admin */}
-                <Route path="/admin/usuarios" element={isAdmin() ? <ReporteVentas /> : <Navigate to="/" />} />
-
-                {/* Rutas heredadas del sistema anterior */}
-                <Route path="/Precios" element={isAuthenticated ? <Precios /> : <Navigate to="/" />} />
-                <Route path="/ReporteVentas" element={isAuthenticated ? <ReporteVentas /> : <Navigate to="/" />} />
+                <Route path="/admin/usuarios" element={isAdmin() ? <GestionUsuarios /> : <Navigate to="/" />} />
+                <Route path="/solicitudes-profesores" element={isAdmin() ? <SolicitudesProfesores /> : <Navigate to="/" />}/>
             </Routes>
             {isAuthenticated && <Footer />}
         </Router>
@@ -57,5 +66,3 @@ function App() {
 }
 
 export default App;
-
-

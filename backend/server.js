@@ -1,10 +1,57 @@
 
 const express = require('express');
+const bodyParser = require('body-parser');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
 const app = express();
+const PORT = 5000;
+
+// Configuración de nodemailer
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'educaprocorporation8@gmail.com', // Tu email de Gmail
+        pass: 'syul lojp pjjn ntlh' // Tu App Password de Gmail
+    }
+});
+
+app.listen(PORT, () => {
+    console.log(`Servidor corriendo en el puerto ${PORT}`);
+});
 app.use(cors());
 app.use(express.json());
+
+app.get('/profesores/pendientes', async (req, res) => {
+    try {
+        const profesoresPendientes = await Usuario.findAll({
+            where: { 
+                EstadoCuenta: 'pendiente',
+                RolId: 2 // ID del rol profesor
+            },
+            attributes: ['IdUsuario', 'NombreCompleto', 'Correo', 'Telefono', 'Distrito', 'FechaRegistro', 'EstadoCuenta'],
+            include: [{
+                model: Rol,
+                as: 'Rol',
+                attributes: ['NombreRol']
+            }]
+        });
+
+        res.json({
+            cantidad: profesoresPendientes.length,
+            profesores: profesoresPendientes
+        });
+
+    } catch (error) {
+        console.error('Error al obtener profesores pendientes:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener los profesores pendientes',
+            error: error.message
+        });
+    }
+});
+
+
 
 // Importar modelos desde modelodatos.js
 const { sequelize, Rol, Usuario, Curso, SolicitudCurso, MaterialCurso } = require('./datos/modelodatos');
@@ -43,7 +90,10 @@ const verificarToken = (req, res, next) => {
 // Middleware para verificar roles
 const verificarRol = (roles) => {
     return (req, res, next) => {
-        if (!roles.includes(req.usuario.rol)) {
+        // Normaliza el rol del usuario y los roles permitidos a minúsculas
+        const usuarioRol = req.usuario.rol.toLowerCase();
+        const rolesPermitidos = roles.map(r => r.toLowerCase());
+        if (!rolesPermitidos.includes(usuarioRol)) {
             return res.status(403).json({ 
                 mensaje: 'No tienes permiso para realizar esta acción' 
             });
@@ -51,6 +101,50 @@ const verificarRol = (roles) => {
         next();
     };
 };
+
+// Endpoint para obtener los cursos del alumno
+app.get('/api/alumno/:id/cursos', verificarToken, verificarRol(['Alumno']), async (req, res) => {
+    try {
+        const cursos = await SolicitudCurso.findAll({
+            where: { 
+                AlumnoId: req.params.id, 
+                EstadoSolicitud: 'aceptado' 
+            },
+            include: [{
+                model: Curso,
+                include: [{
+                    model: Usuario,
+                    as: 'Profesor',
+                    attributes: ['IdUsuario', 'NombreCompleto']
+                }],
+                attributes: ['IdCurso', 'NombreCurso', 'Descripcion', 'FechaInicio', 'FechaFin', 'Horario', 'FechaCreacion']
+            }]
+        });
+        res.json(cursos);
+    } catch (error) {
+        console.error('Error al obtener cursos del alumno:', error);
+        res.status(500).json({ 
+            mensaje: 'Error al obtener los cursos',
+            error: error.message
+        });
+    }
+});
+
+// Endpoint para que un alumno se salga de un curso
+app.delete('/api/alumno/:alumnoId/curso/:cursoId', verificarToken, verificarRol(['Alumno']), async (req, res) => {
+    try {
+        await SolicitudCurso.destroy({
+            where: {
+                AlumnoId: req.params.alumnoId,
+                CursoId: req.params.cursoId,
+                EstadoSolicitud: 'aceptado'
+            }
+        });
+        res.json({ mensaje: 'Salida del curso exitosa' });
+    } catch (error) {
+        res.status(500).json({ mensaje: 'Error al salir del curso' });
+    }
+});
 
 // Middleware para verificar que el profesor esté activo
 const verificarProfesorActivo = async (req, res, next) => {
@@ -77,6 +171,88 @@ const verificarProfesorActivo = async (req, res, next) => {
         });
     }
 };
+
+// Endpoint para obtener cursos disponibles
+app.get('/api/cursos/disponibles', async (req, res) => {
+    try {
+        console.log('Buscando cursos disponibles...');
+        console.log('Usuario autenticado:', req.usuario);
+
+        const cursosDisponibles = await Curso.findAll({
+            include: [{
+                model: Usuario,
+                as: 'Profesor',
+                where: {
+                    EstadoCuenta: 'activo',
+                    RolId: 2 // ID del rol profesor
+                },
+                attributes: ['IdUsuario', 'NombreCompleto']
+            }],
+            where: {
+                FechaFin: {
+                    [Op.gte]: new Date()
+                }
+            },
+            attributes: ['IdCurso', 'NombreCurso', 'Descripcion', 'FechaInicio', 'FechaFin', 'Horario']
+        });
+
+        console.log('Cursos encontrados:', cursosDisponibles.length);
+
+        res.json(cursosDisponibles);
+    } catch (error) {
+        console.error('Error al obtener cursos disponibles:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener los cursos disponibles',
+            error: error.message
+        });
+    }
+});
+
+// Endpoint para enviar solicitud de inscripción
+app.post('/api/cursos/:cursoId/solicitud', async (req, res) => {
+    try {
+        const cursoId = req.params.cursoId;
+        const { alumnoId } = req.body;
+
+        if (!alumnoId) {
+            return res.status(400).json({
+                mensaje: 'Es necesario proporcionar el ID del alumno'
+            });
+        }
+
+        // Verificar si existe alguna solicitud previa para este curso (en cualquier estado)
+        const solicitudExistente = await SolicitudCurso.findOne({
+            where: {
+                CursoId: cursoId,
+                AlumnoId: alumnoId
+            }
+        });
+
+        if (solicitudExistente) {
+            return res.status(400).json({
+                mensaje: 'Ya tienes una solicitud pendiente para este curso'
+            });
+        }
+
+        // Crear nueva solicitud
+        const nuevaSolicitud = await SolicitudCurso.create({
+            CursoId: cursoId,
+            AlumnoId: alumnoId,
+            EstadoSolicitud: 'pendiente'
+        });
+
+        res.status(201).json({
+            mensaje: 'Solicitud enviada correctamente',
+            solicitud: nuevaSolicitud
+        });
+    } catch (error) {
+        console.error('Error al enviar solicitud:', error);
+        res.status(500).json({
+            mensaje: 'Error al enviar la solicitud',
+            error: error.message
+        });
+    }
+});
 
 // Middleware para verificar acceso al curso
 const verificarAccesoCurso = async (req, res, next) => {
@@ -107,7 +283,7 @@ const verificarAccesoCurso = async (req, res, next) => {
     }
 };
 // Aprobar/Rechazar cuenta de usuario
-app.put('/usuarios/:usuarioId/estado', verificarToken, verificarRol(['Administrador']), async (req, res) => {
+app.put('/api/usuarios/:usuarioId/estado', verificarToken, verificarRol(['Administrador']), async (req, res) => {
     try {
         const { usuarioId } = req.params;
         const { estado } = req.body;
@@ -118,7 +294,14 @@ app.put('/usuarios/:usuarioId/estado', verificarToken, verificarRol(['Administra
             });
         }
 
-        const usuario = await Usuario.findByPk(usuarioId);
+        const usuario = await Usuario.findOne({
+            where: { IdUsuario: usuarioId },
+            include: [{
+                model: Rol,
+                as: 'Rol',
+                attributes: ['NombreRol']
+            }]
+        });
 
         if (!usuario) {
             return res.status(404).json({
@@ -130,8 +313,18 @@ app.put('/usuarios/:usuarioId/estado', verificarToken, verificarRol(['Administra
         await usuario.save();
 
         res.json({
-            mensaje: 'Estado de cuenta actualizado exitosamente',
-            usuario
+            mensaje: estado === 'activo' 
+                ? 'Usuario activado exitosamente'
+                : 'Usuario suspendido exitosamente',
+            usuario: {
+                IdUsuario: usuario.IdUsuario,
+                NombreCompleto: usuario.NombreCompleto,
+                Correo: usuario.Correo,
+                Telefono: usuario.Telefono,
+                Distrito: usuario.Distrito,
+                EstadoCuenta: usuario.EstadoCuenta,
+                Rol: usuario.Rol
+            }
         });
 
     } catch (error) {
@@ -476,30 +669,52 @@ app.put('/api/cursos/:id', verificarToken, verificarRol(['profesor']), verificar
 });
 
 // Eliminar curso (profesor)
-app.delete('/api/cursos/:id', verificarToken, verificarRol(['profesor']), verificarProfesorActivo, async (req, res) => {
+app.delete('/api/cursos/:id', verificarToken, verificarRol(['Profesor']), verificarProfesorActivo, async (req, res) => {
+    const t = await sequelize.transaction();
+    
     try {
         const { id } = req.params;
+        const profesorId = req.usuario.id;
 
+        // Verificar que el curso existe y pertenece al profesor
         const curso = await Curso.findOne({
             where: {
                 IdCurso: id,
-                ProfesorId: req.usuario.id
-            }
+                ProfesorId: profesorId
+            },
+            transaction: t
         });
 
         if (!curso) {
+            await t.rollback();
             return res.status(404).json({
                 mensaje: 'Curso no encontrado o no tienes permiso para eliminarlo'
             });
         }
 
-        await curso.destroy();
+        // Eliminar primero las solicitudes
+        await SolicitudCurso.destroy({
+            where: { CursoId: id },
+            transaction: t
+        });
+
+        // Eliminar los materiales
+        await MaterialCurso.destroy({
+            where: { CursoId: id },
+            transaction: t
+        });
+
+        // Finalmente eliminar el curso
+        await curso.destroy({ transaction: t });
+
+        await t.commit();
 
         res.json({
             mensaje: 'Curso eliminado exitosamente'
         });
 
     } catch (error) {
+        await t.rollback();
         console.error('Error al eliminar curso:', error);
         res.status(500).json({
             mensaje: 'Error al eliminar el curso',
@@ -507,6 +722,7 @@ app.delete('/api/cursos/:id', verificarToken, verificarRol(['profesor']), verifi
         });
     }
 });
+
 
 // Listar cursos creados por un profesor
 app.get('/api/profesor/:id/cursos', verificarToken, verificarRol(['profesor']), verificarProfesorActivo, async (req, res) => {
@@ -550,9 +766,21 @@ app.post('/api/solicitudes', verificarToken, verificarRol(['alumno']), async (re
         });
 
         if (solicitudExistente) {
-            return res.status(400).json({
-                mensaje: 'Ya has enviado una solicitud para este curso'
-            });
+            let mensaje = 'Ya no puedes enviar una solicitud para este curso. ';
+            
+            switch(solicitudExistente.EstadoSolicitud) {
+                case 'pendiente':
+                    mensaje += 'Tienes una solicitud pendiente de aprobación.';
+                    break;
+                case 'aceptado':
+                    mensaje += 'Ya estás inscrito en este curso.';
+                    break;
+                case 'rechazado':
+                    mensaje += 'Tu solicitud anterior fue rechazada.';
+                    break;
+            }
+
+            return res.status(400).json({ mensaje });
         }
 
         const nuevaSolicitud = await SolicitudCurso.create({
@@ -575,12 +803,13 @@ app.post('/api/solicitudes', verificarToken, verificarRol(['alumno']), async (re
 });
 
 // Ver solicitudes de cursos recibidas (profesor)
-app.get('/api/profesor/:id/solicitudes', verificarToken, verificarRol(['profesor']), verificarProfesorActivo, async (req, res) => {
+app.get('/api/profesor/:id/solicitudes', async (req, res) => {
     try {
+        const { id } = req.params;
         const solicitudes = await SolicitudCurso.findAll({
             include: [{
                 model: Curso,
-                where: { ProfesorId: req.usuario.id },
+                where: { ProfesorId: id },
                 attributes: ['NombreCurso']
             }, {
                 model: Usuario,
@@ -603,7 +832,7 @@ app.get('/api/profesor/:id/solicitudes', verificarToken, verificarRol(['profesor
 });
 
 // Aceptar/Rechazar solicitud (profesor)
-app.put('/api/solicitudes/:id', verificarToken, verificarRol(['profesor']), verificarProfesorActivo, async (req, res) => {
+app.put('/api/solicitudes/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const { estado } = req.body;
@@ -615,10 +844,21 @@ app.put('/api/solicitudes/:id', verificarToken, verificarRol(['profesor']), veri
         }
 
         const solicitud = await SolicitudCurso.findOne({
-            include: [{
-                model: Curso,
-                where: { ProfesorId: req.usuario.id }
-            }],
+            include: [
+                {
+                    model: Curso,
+                    include: [{
+                        model: Usuario,
+                        as: 'Profesor',
+                        attributes: ['NombreCompleto']
+                    }]
+                },
+                {
+                    model: Usuario,
+                    as: 'Alumno',
+                    attributes: ['NombreCompleto', 'Correo']
+                }
+            ],
             where: { IdSolicitud: id }
         });
 
@@ -630,6 +870,173 @@ app.put('/api/solicitudes/:id', verificarToken, verificarRol(['profesor']), veri
 
         solicitud.EstadoSolicitud = estado;
         await solicitud.save();
+
+        // Enviar correo al alumno
+        try {
+            const esAceptado = estado === 'aceptado';
+            const asunto = esAceptado 
+                ? `¡Felicidades! Tu solicitud ha sido aceptada` 
+                : `Información sobre tu solicitud de curso`;
+
+            const htmlContent = `
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>${asunto}</title>
+                    <style>
+                        body {
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                            line-height: 1.6;
+                            color: #333;
+                            background-color: #f4f4f4;
+                            margin: 0;
+                            padding: 0;
+                        }
+                        .container {
+                            max-width: 600px;
+                            margin: 0 auto;
+                            background-color: #ffffff;
+                            border-radius: 10px;
+                            overflow: hidden;
+                            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+                        }
+                        .header {
+                            background: ${esAceptado ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'};
+                            color: white;
+                            padding: 30px;
+                            text-align: center;
+                        }
+                        .header h1 {
+                            margin: 0;
+                            font-size: 28px;
+                            font-weight: 300;
+                        }
+                        .content {
+                            padding: 40px 30px;
+                        }
+                        .greeting {
+                            font-size: 18px;
+                            margin-bottom: 20px;
+                            color: #2c3e50;
+                        }
+                        .message {
+                            background-color: ${esAceptado ? '#d4edda' : '#f8d7da'};
+                            border-left: 4px solid ${esAceptado ? '#28a745' : '#dc3545'};
+                            padding: 20px;
+                            margin: 20px 0;
+                            border-radius: 5px;
+                        }
+                        .course-details {
+                            background-color: #f8f9fa;
+                            padding: 20px;
+                            border-radius: 8px;
+                            margin: 20px 0;
+                        }
+                        .course-details h3 {
+                            margin-top: 0;
+                            color: #495057;
+                        }
+                        .detail-item {
+                            margin: 10px 0;
+                            padding: 5px 0;
+                            border-bottom: 1px solid #dee2e6;
+                        }
+                        .detail-label {
+                            font-weight: bold;
+                            color: #6c757d;
+                        }
+                        .footer {
+                            background-color: #2c3e50;
+                            color: white;
+                            padding: 20px;
+                            text-align: center;
+                            font-size: 14px;
+                        }
+                        .btn {
+                            display: inline-block;
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            color: white;
+                            padding: 12px 25px;
+                            text-decoration: none;
+                            border-radius: 25px;
+                            margin: 20px 0;
+                            font-weight: bold;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>${esAceptado ? '🎉 ¡Solicitud Aceptada!' : '📧 Actualización de Solicitud'}</h1>
+                        </div>
+                        <div class="content">
+                            <div class="greeting">
+                                Hola ${solicitud.Alumno.NombreCompleto},
+                            </div>
+                            
+                            <div class="message">
+                                ${esAceptado 
+                                    ? `<strong>¡Excelentes noticias!</strong> Tu solicitud para el curso <strong>"${solicitud.Curso.NombreCurso}"</strong> ha sido <strong style="color: #28a745;">ACEPTADA</strong> por el profesor ${solicitud.Curso.Profesor.NombreCompleto}.`
+                                    : `Te informamos que tu solicitud para el curso <strong>"${solicitud.Curso.NombreCurso}"</strong> ha sido <strong style="color: #dc3545;">RECHAZADA</strong> por el profesor ${solicitud.Curso.Profesor.NombreCompleto}.`
+                                }
+                            </div>
+
+                            <div class="course-details">
+                                <h3>📚 Detalles del Curso</h3>
+                                <div class="detail-item">
+                                    <span class="detail-label">Nombre del curso:</span> ${solicitud.Curso.NombreCurso}
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Profesor:</span> ${solicitud.Curso.Profesor.NombreCompleto}
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Estado de la solicitud:</span> 
+                                    <span style="color: ${esAceptado ? '#28a745' : '#dc3545'}; font-weight: bold;">
+                                        ${estado.toUpperCase()}
+                                    </span>
+                                </div>
+                            </div>
+
+                            ${esAceptado 
+                                ? `<p>Ya puedes acceder a tu curso desde la plataforma. ¡Te deseamos mucho éxito en tu aprendizaje!</p>
+                                   <div style="text-align: center;">
+                                       
+                                   </div>`
+                                : `<p>Lamentamos que no hayas sido seleccionado para este curso en particular. Te animamos a seguir explorando otros cursos disponibles en nuestra plataforma.</p>
+                                   <div style="text-align: center;">
+                                       
+                                   </div>`
+                            }
+
+                            <p style="margin-top: 30px; color: #6c757d;">
+                                Si tienes alguna pregunta, no dudes en contactarnos.
+                            </p>
+                        </div>
+                        <div class="footer">
+                            <p>© 2025 AgendaCursos - Plataforma de Gestión de Cursos</p>
+                            <p>Este es un correo automático, por favor no responder.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            const mailOptions = {
+                from: 'jeckserasbell.05@gmail.com',
+                to: solicitud.Alumno.Correo,
+                subject: asunto,
+                html: htmlContent
+            };
+
+            await transporter.sendMail(mailOptions);
+            console.log(`Correo enviado exitosamente a: ${solicitud.Alumno.Correo}`);
+
+        } catch (emailError) {
+            console.error('Error al enviar correo:', emailError);
+            // No fallar la respuesta si el correo falla, solo loggear el error
+        }
 
         res.json({
             mensaje: 'Solicitud actualizada exitosamente',
@@ -714,8 +1121,8 @@ app.post('/api/materiales', verificarToken, verificarRol(['profesor']), verifica
     }
 });
 
-// Ver materiales del curso (alumno aceptado)
-app.get('/api/cursos/:id/materiales', verificarToken, verificarAccesoCurso, async (req, res) => {
+// Ver materiales del curso (público)
+app.get('/api/cursos/:id/materiales', async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -735,10 +1142,79 @@ app.get('/api/cursos/:id/materiales', verificarToken, verificarAccesoCurso, asyn
     }
 });
 
+// Editar material del curso
+app.put('/api/materiales/:id', verificarToken, verificarRol(['profesor']), verificarProfesorActivo, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { titulo, enlace } = req.body;
+
+        const material = await MaterialCurso.findByPk(id);
+        if (!material) {
+            return res.status(404).json({
+                mensaje: 'Material no encontrado'
+            });
+        }
+
+        // Verificar que el profesor es dueño del curso
+        const curso = await Curso.findOne({
+            where: {
+                IdCurso: material.CursoId,
+                ProfesorId: req.usuario.id
+            }
+        });
+
+        if (!curso) {
+            return res.status(403).json({
+                mensaje: 'No tienes permiso para modificar este material'
+            });
+        }
+
+        await material.update({
+            Titulo: titulo,
+            Enlace: enlace
+        });
+
+        res.json({
+            mensaje: 'Material actualizado exitosamente',
+            material
+        });
+    } catch (error) {
+        console.error('Error al actualizar material:', error);
+        res.status(500).json({
+            mensaje: 'Error al actualizar el material',
+            error: error.message
+        });
+    }
+});
+
 // ADMINISTRACIÓN DE USUARIOS (solo admin)
 
+// Obtener todos los usuarios
+app.get('/api/usuarios', verificarToken, verificarRol(['Administrador']), async (req, res) => {
+    try {
+        const usuarios = await Usuario.findAll({
+            attributes: ['IdUsuario', 'NombreCompleto', 'Correo', 'Telefono', 'Distrito', 'FechaRegistro', 'EstadoCuenta'],
+            include: [{
+                model: Rol,
+                as: 'Rol',
+                attributes: ['NombreRol']
+            }],
+            order: [['FechaRegistro', 'DESC']]
+        });
+
+        res.json(usuarios);
+
+    } catch (error) {
+        console.error('Error al obtener usuarios:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener los usuarios',
+            error: error.message
+        });
+    }
+});
+
 // Obtener todos los usuarios pendientes de aprobación
-app.get('/usuarios/pendientes', verificarToken, verificarRol(['admin']), async (req, res) => {
+app.get('/usuarios/pendientes', async (req, res) => {
     try {
         const usuarios = await Usuario.findAll({
             where: { EstadoCuenta: 'pendiente' },
@@ -759,13 +1235,39 @@ app.get('/usuarios/pendientes', verificarToken, verificarRol(['admin']), async (
     }
 });
 
+// Obtener profesores con cuenta pendiente
+app.get('/profesores/pendientes', async (req, res) => {
+    try {
+        const profesoresPendientes = await Usuario.findAll({
+            where: { 
+                EstadoCuenta: 'pendiente',
+                RolId: 2 // ID del rol profesor
+            },
+            attributes: ['IdUsuario', 'NombreCompleto', 'Correo', 'Telefono', 'Distrito', 'FechaRegistro', 'EstadoCuenta'],
+            include: [{
+                model: Rol,
+                as: 'Rol',
+                attributes: ['NombreRol']
+            }]
+        });
 
+        res.json({
+            cantidad: profesoresPendientes.length,
+            profesores: profesoresPendientes
+        });
 
-// Iniciar el servidor
-const PORT = 5000;
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en el puerto ${PORT}`);
+    } catch (error) {
+        console.error('Error al obtener profesores pendientes:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener los profesores pendientes',
+            error: error.message
+        });
+    }
 });
+
+
+
+
 
 
 

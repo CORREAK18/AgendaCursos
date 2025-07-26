@@ -1,6 +1,7 @@
 import React from "react";
 import { Nav } from "react-bootstrap";
 import { jwtDecode } from "jwt-decode";
+import { Link } from 'react-router-dom';
 
 function Menu() {
     const getMenuItems = () => {
@@ -10,12 +11,11 @@ function Menu() {
         try {
             const decodedToken = jwtDecode(token);
             const userRole = decodedToken.rol;
-            console.log('Rol detectado:', userRole); // Agregamos este log
+            console.log('Rol detectado:', userRole);
 
             // Menú base (compartido por todos los roles)
             const baseMenu = [
                 { path: "/inicio", text: "Inicio" },
-                { path: "/menu", text: "Menú Principal" }
             ];
 
             // Menú específico para cada rol
@@ -29,14 +29,16 @@ function Menu() {
                 case 'Alumno':
                     return [
                         ...baseMenu,
-                        { path: "/alumno/cursos", text: "Cursos Disponibles" },
-                        { path: "/alumno/miscursos", text: "Mis Cursos" }
+                       
+                        { path: "/cursos/disponibles", text: "Cursos Disponibles" },
+                        { path: "/alumno/cursosM", text: "Mis Cursos" }
                     ];
                 case 'Administrador':
                     return [
                         ...baseMenu,
                         { path: "/admin/usuarios", text: "Gestión de Usuarios" },
-                        { path: "/admin/SolcicitudesActivacion", text: "Solcicitudes de Activacion" }
+                        { path: "/solicitudes-profesores", text: "Solicitudes de Profesores" },
+                        
                     ];
                 default:
                     return baseMenu;
@@ -55,7 +57,7 @@ function Menu() {
     return (
         <Nav className="menu" defaultActiveKey="/inicio">
             {getMenuItems().map((item, index) => (
-                <Nav.Link key={index} href={item.path}>
+                <Nav.Link as={Link} to={item.path} key={index}>
                     {item.text}
                 </Nav.Link>
             ))}

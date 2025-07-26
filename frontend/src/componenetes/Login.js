@@ -16,7 +16,7 @@ const Login = () => {
             });
             
             localStorage.setItem('token', response.data.token);
-            window.location.href = "/menu";
+            window.location.href = "/inicio";
         } catch (error) {
             alert(error.response?.data?.mensaje || 'Error al iniciar sesión');
         }
@@ -25,7 +25,7 @@ const Login = () => {
     return (
         <div className="container">
             <div className="imagen-login">
-                <img src='./imagenes/escuelaii.jpg' alt='Imagen en login' />
+                <img src='./imagenes/imgLogin.jpeg' alt='Imagen en login' />
             </div>
             <div className="form-section">
                 <h3 className="login-title">Iniciar Sesión</h3>
@@ -61,6 +61,11 @@ const Login = () => {
                     <button type="submit" className="custom-button">
                         Iniciar Sesión
                     </button>
+                    <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                        <a href="/registro" style={{ textDecoration: 'none', display: 'inline-block' }}>
+                            Registrarte
+                        </a>
+                    </div>
                 </Form>
             </div>
         </div>
